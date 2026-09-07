@@ -87,6 +87,16 @@ class SwapiApiTest {
   }
 
   @Test
+  @DisplayName("a comma-joined value is also an OR — how a browser sends one multi-select")
+  void commaJoinedValuesAreAnOr() throws Exception {
+    mvc.perform(get("/api/people").param("gender", "male,female"))
+        .andExpect(jsonPath("$.totalElements").value(77));
+    // …but a TEXT filter is not split: "hot, humid" is one honest value, not two loose ones
+    mvc.perform(get("/api/planets").param("climate", "arid"))
+        .andExpect(jsonPath("$.totalElements").value(9));
+  }
+
+  @Test
   @DisplayName("ranges are inclusive and compare as numbers, not as text")
   void ranges() throws Exception {
     mvc.perform(get("/api/people").param("height_from", "200"))

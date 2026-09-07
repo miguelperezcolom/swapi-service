@@ -6,10 +6,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.MultiValueMap;
 
@@ -53,7 +55,7 @@ public final class SpecificationBuilder {
         String name = declared.getKey();
         QuerySpec.Filter filter = declared.getValue();
 
-        List<String> values = values(params, name);
+        List<String> values = values(params, name, filter.kind());
         if (!values.isEmpty()) {
           List<Predicate> or = values.stream()
               .map(value -> equality(root, cb, filter, value))
@@ -161,9 +163,24 @@ public final class SpecificationBuilder {
     return values == null || values.isEmpty() ? null : values.get(0);
   }
 
-  private static List<String> values(MultiValueMap<String, String> params, String name) {
+  /**
+   * The values one filter was given. A parameter may be repeated, and — for a filter whose values
+   * cannot themselves contain a comma — a single comma-joined value counts as several. That is what
+   * a client sending one multi-select as `?gender=male,female` means, and a browser is a client that
+   * naturally joins a list that way.
+   *
+   * <p>A TEXT filter is deliberately NOT split: `climate` really does hold "hot, humid", and
+   * splitting it would turn one honest condition into two loose ones.
+   */
+  private static List<String> values(
+      MultiValueMap<String, String> params, String name, FilterKind kind) {
     List<String> values = params.get(name);
     if (values == null) return List.of();
-    return values.stream().filter(v -> v != null && !v.isBlank()).toList();
+    return values.stream()
+        .filter(v -> v != null && !v.isBlank())
+        .flatMap(v -> kind == FilterKind.TEXT ? Stream.of(v) : Arrays.stream(v.split(",")))
+        .map(String::trim)
+        .filter(v -> !v.isEmpty())
+        .toList();
   }
 }
