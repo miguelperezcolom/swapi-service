@@ -43,7 +43,10 @@ public class VehiclesController extends CrudController<Vehicle, VehicleDto> {
         .filter("name", FilterKind.TEXT)
         .filter("model", FilterKind.TEXT)
         .filter("manufacturer", FilterKind.TEXT)
-        .filter("vehicleClass", FilterKind.EXACT)
+        // A descriptive multi-word label, not a closed set: the data holds "wheeled walker",
+        // "Assault Starfighter" and both casings of "starfighter". Exact equality would make a
+        // caller reproduce the whole string; containment is what someone filtering by class means.
+        .filter("vehicleClass", FilterKind.TEXT)
         .filter("costInCredits", FilterKind.NUMBER)
         .filter("length", FilterKind.NUMBER)
         .filter("maxAtmospheringSpeed", FilterKind.NUMBER)

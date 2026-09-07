@@ -108,6 +108,16 @@ class SwapiApiTest {
   }
 
   @Test
+  @DisplayName("a class filter matches by containment, across the data's own casing")
+  void classFiltersAreText() throws Exception {
+    // "starfighter" has to find "Starfighter" and "Assault Starfighter" alike
+    mvc.perform(get("/api/starships").param("starshipClass", "starfighter"))
+        .andExpect(jsonPath("$.totalElements").value(11));
+    mvc.perform(get("/api/vehicles").param("vehicleClass", "walker"))
+        .andExpect(jsonPath("$.totalElements").value(7));
+  }
+
+  @Test
   @DisplayName("a reference is filterable by id — the residents of a world")
   void filterByReference() throws Exception {
     mvc.perform(get("/api/people").param("homeworldId", "1"))

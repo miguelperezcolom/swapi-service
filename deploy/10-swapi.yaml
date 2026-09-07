@@ -31,7 +31,7 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: swapi
-          image: miguelperezcolom/swapi-service:0.1.1
+          image: miguelperezcolom/swapi-service:0.1.2
           env:
             - name: SERVER_PORT
               value: "8120"

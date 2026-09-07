@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REGISTRY="${REGISTRY:-miguelperezcolom}"
-TAG="${1:-0.1.1}"
+TAG="${1:-0.1.2}"
 IMAGE="$REGISTRY/swapi-service:$TAG"
 
 cd "$(dirname "$0")/.."
