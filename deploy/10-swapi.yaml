@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swapi
+  namespace: swapi
+  labels: { app: swapi }
+spec:
+  replicas: 1
+  # The database is in memory, so two replicas would be two different databases answering the same
+  # host at random. One replica is not a resource choice here, it is a correctness one.
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: swapi }
+  template:
+    metadata:
+      labels:
+        app: swapi
+        app.kubernetes.io/component: swapi
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "8120"
+    spec:
+      # The cluster can provision arm64 nodes; the image is amd64-only, and a mismatch is an
+      # unschedulable pod rather than a build error, so the node group is pinned.
+      nodeSelector:
+        node.kubernetes.io/instance-type: cx43
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: swapi
+          image: miguelperezcolom/swapi-service:0.1.0
+          env:
+            - name: SERVER_PORT
+              value: "8120"
+            - name: WRITE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: swapi-write-key
+                  key: WRITE_KEY
+                  # Optional so a missing secret yields a pod that runs and refuses writes, rather
+                  # than one stuck Pending with nothing to read.
+                  optional: true
+          ports:
+            - { name: http, containerPort: 8120 }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          resources:
+            requests: { memory: "512Mi", cpu: "200m" }
+            limits:   { memory: "1Gi",   cpu: "1" }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: 8120 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: 8120 }
+            initialDelaySeconds: 60
+            periodSeconds: 20
+      volumes:
+        - { name: tmp, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swapi
+  namespace: swapi
+  labels: { app: swapi }
+spec:
+  selector: { app: swapi }
+  ports:
+    - { name: http, port: 8120, targetPort: 8120 }

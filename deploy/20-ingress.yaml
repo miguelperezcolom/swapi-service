@@ -1,0 +1,26 @@
+# Public on its own host, not behind the ec-demo1 gateway: this API is meant to be called by anyone,
+# including a static page with no token. The `*.ec1.mateu.io` wildcard already resolves to the
+# ingress LoadBalancer, so no DNS record is needed — cert-manager issues the certificate on the
+# first request via HTTP-01.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: swapi
+  namespace: swapi
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [swapi.ec1.mateu.io]
+      secretName: swapi-tls
+  rules:
+    - host: swapi.ec1.mateu.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: swapi
+                port: { number: 8120 }

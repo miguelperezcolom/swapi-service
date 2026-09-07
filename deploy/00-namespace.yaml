@@ -1,0 +1,8 @@
+# Its own namespace, deliberately apart from ec-demo1: this is a public demo API that anybody may
+# write to, and nothing of it should share a blast radius with the demo platform.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: swapi
+  labels:
+    app.kubernetes.io/part-of: swapi
