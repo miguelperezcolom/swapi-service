@@ -245,6 +245,15 @@ class SwapiApiTest {
   }
 
   @Test
+  @DisplayName("a filter with more values than any multi-select sends is a 400")
+  void tooManyFilterValues() throws Exception {
+    String many = String.join(",", java.util.Collections.nCopies(51, "male"));
+    mvc.perform(get("/api/people").param("gender", many))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("at most 50")));
+  }
+
+  @Test
   @DisplayName("the contract is published, and it declares the write key")
   void openApiIsPublished() throws Exception {
     mvc.perform(get("/v3/api-docs"))

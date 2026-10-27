@@ -1,5 +1,6 @@
 package io.mateu.swapi.infra.in.rest;
 
+import io.mateu.swapi.infra.in.rest.query.TooManyValuesException;
 import io.mateu.swapi.infra.in.rest.query.UnknownFilterException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -22,9 +23,16 @@ public class ApiExceptionHandler {
     return body(HttpStatus.NOT_FOUND, e.getMessage());
   }
 
-  @ExceptionHandler({BadReferenceException.class, UnknownFilterException.class})
+  @ExceptionHandler({
+    BadReferenceException.class, UnknownFilterException.class, TooManyValuesException.class
+  })
   public ResponseEntity<Map<String, Object>> badRequest(RuntimeException e) {
     return body(HttpStatus.BAD_REQUEST, e.getMessage());
+  }
+
+  @ExceptionHandler(CollectionFullException.class)
+  public ResponseEntity<Map<String, Object>> full(CollectionFullException e) {
+    return body(HttpStatus.INSUFFICIENT_STORAGE, e.getMessage());
   }
 
   /** A `?height_from=tall` is the caller's mistake, not a server fault — 400, not 500. */

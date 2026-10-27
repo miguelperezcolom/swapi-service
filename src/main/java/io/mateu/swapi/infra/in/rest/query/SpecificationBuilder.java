@@ -31,6 +31,9 @@ public final class SpecificationBuilder {
   /** Reserved parameters that steer the page rather than filter it. */
   public static final Set<String> RESERVED = Set.of("search", "page", "size", "sort");
 
+  /** More than any multi-select sends; see {@link TooManyValuesException}. */
+  private static final int MAX_VALUES = 50;
+
   private static final String FROM = "_from";
   private static final String TO = "_to";
 
@@ -38,6 +41,7 @@ public final class SpecificationBuilder {
 
   public static <T> Specification<T> build(MultiValueMap<String, String> params, QuerySpec spec) {
     rejectUnknown(params, spec);
+    rejectTooMany(params, spec);
     return (root, query, cb) -> {
       List<Predicate> and = new ArrayList<>();
 
@@ -90,6 +94,14 @@ public final class SpecificationBuilder {
     if (!unknown.isEmpty()) {
       throw new UnknownFilterException(unknown, spec.filters().keySet());
     }
+  }
+
+  /** Checked up front, not while building predicates, so the 400 never reaches the database. */
+  private static void rejectTooMany(MultiValueMap<String, String> params, QuerySpec spec) {
+    spec.filters().forEach((name, filter) -> {
+      int given = values(params, name, filter.kind()).size();
+      if (given > MAX_VALUES) throw new TooManyValuesException(name, given, MAX_VALUES);
+    });
   }
 
   private static <T> Predicate equality(

@@ -37,6 +37,9 @@ swapi:
   write-key-header: ${WRITE_KEY_HEADER:X-Api-Key}
   # No default on purpose: an unset key refuses every write rather than allowing them.
   write-key: ${WRITE_KEY:}
+  # The database is in the heap: this ceiling is what keeps a flood of creates from becoming an
+  # OutOfMemoryError. A create beyond it is a 507.
+  max-rows-per-collection: ${MAX_ROWS_PER_COLLECTION:2000}
 
 springdoc:
   swagger-ui:

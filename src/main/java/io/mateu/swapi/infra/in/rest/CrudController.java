@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,13 @@ import org.springframework.web.bind.annotation.*;
  * @param <D> its wire shape
  */
 public abstract class CrudController<E, D> {
+
+  /**
+   * The most rows a collection may hold. The database is in the heap, so this is what keeps a flood
+   * of creates from becoming an OutOfMemoryError. Well above the seed (82 people at most).
+   */
+  @Value("${swapi.max-rows-per-collection:2000}")
+  private long maxRows;
 
   /** The collection's path segment — {@code people} — used to build each row's self link. */
   protected abstract String collection();
@@ -101,11 +109,13 @@ public abstract class CrudController<E, D> {
   @ApiResponses({
     @ApiResponse(responseCode = "201", description = "Created; the Location header carries the row"),
     @ApiResponse(responseCode = "400", description = "A referenced id does not exist, or a field is invalid"),
-    @ApiResponse(responseCode = "401", description = "Missing or wrong write key")
+    @ApiResponse(responseCode = "401", description = "Missing or wrong write key"),
+    @ApiResponse(responseCode = "507", description = "The collection is at its row ceiling")
   })
   @Transactional
   @PostMapping
   public ResponseEntity<D> create(@Valid @RequestBody D dto) {
+    if (repository().count() >= maxRows) throw new CollectionFullException(collection(), maxRows);
     E entity = newEntity();
     apply(dto, entity);
     E saved = repository().save(entity);

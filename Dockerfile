@@ -5,8 +5,12 @@ RUN addgroup -S app && adduser -S -G app -u 10001 app
 WORKDIR /opt/app
 COPY --chown=app:app target/swapi-service-*.jar app.jar
 # The container runs with a read-only root filesystem and only /tmp is writable, so the JVM has to
-# be told where to put its scratch files.
-ENV SERVER_PORT=8120 JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=/tmp
+# be told where to put its scratch files. The heap defaults to a quarter of the container limit,
+# which leaves most of it unused; 75% gives the in-memory database room. And a JVM out of memory
+# limps on half-dead, answering nothing while the liveness probe may still pass — exiting hands it
+# to Kubernetes to restart instead.
+ENV SERVER_PORT=8120 \
+    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=/tmp -XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 USER app
 EXPOSE 8120
 ENTRYPOINT ["java", "-jar", "app.jar"]
