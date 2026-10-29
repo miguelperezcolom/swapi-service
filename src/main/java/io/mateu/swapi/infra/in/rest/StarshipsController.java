@@ -88,7 +88,8 @@ public class StarshipsController extends CrudController<Starship, StarshipDto> {
         s.getStarshipClass(),
         s.getPilots().stream().map(p -> p.getId()).toList(),
         s.getFilms().stream().map(f -> f.getId()).toList(),
-        urlOf(s.getId()));
+        urlOf(s.getId()),
+        Avatars.of(Avatars.THINGS, s.getName()));
   }
 
   @Override

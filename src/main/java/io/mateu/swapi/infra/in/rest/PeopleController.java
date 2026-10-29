@@ -83,7 +83,8 @@ public class PeopleController extends CrudController<Person, PersonDto> {
         p.getFilms().stream().map(f -> f.getId()).toList(),
         p.getVehicles().stream().map(v -> v.getId()).toList(),
         p.getStarships().stream().map(s -> s.getId()).toList(),
-        urlOf(p.getId()));
+        urlOf(p.getId()),
+        Avatars.of(Avatars.PEOPLE, p.getName()));
   }
 
   @Override

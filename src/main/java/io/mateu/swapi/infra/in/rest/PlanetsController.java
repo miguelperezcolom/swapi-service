@@ -75,7 +75,8 @@ public class PlanetsController extends CrudController<Planet, PlanetDto> {
         p.getPopulation(),
         p.getResidents().stream().map(r -> r.getId()).toList(),
         p.getFilms().stream().map(f -> f.getId()).toList(),
-        urlOf(p.getId()));
+        urlOf(p.getId()),
+        Avatars.of(Avatars.PLANETS, p.getName()));
   }
 
   @Override

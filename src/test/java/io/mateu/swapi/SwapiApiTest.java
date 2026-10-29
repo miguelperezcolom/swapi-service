@@ -45,6 +45,15 @@ class SwapiApiTest {
   }
 
   @Test
+  @DisplayName("every record carries a generated picture (DiceBear, CC0), the same for the same name")
+  void images() throws Exception {
+    mvc.perform(get("/api/people/1"))
+        .andExpect(jsonPath("$.image").value("https://api.dicebear.com/9.x/notionists/png?size=256&seed=Luke+Skywalker"));
+    mvc.perform(get("/api/planets/1")).andExpect(jsonPath("$.image").value(org.hamcrest.Matchers.startsWith("https://api.dicebear.com/9.x/rings/png")));
+    mvc.perform(get("/api/films").param("size", "1")).andExpect(jsonPath("$.content[0].image").exists());
+  }
+
+  @Test
   @DisplayName("a page carries the total, so a client can render a pager without fetching everything")
   void pagedEnvelope() throws Exception {
     mvc.perform(get("/api/people").param("size", "3"))

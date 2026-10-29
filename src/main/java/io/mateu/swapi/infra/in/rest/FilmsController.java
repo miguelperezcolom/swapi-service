@@ -91,7 +91,8 @@ public class FilmsController extends CrudController<Film, FilmDto> {
         ids(f.getStarships()),
         ids(f.getVehicles()),
         ids(f.getSpecies()),
-        urlOf(f.getId()));
+        urlOf(f.getId()),
+        Avatars.of(Avatars.THINGS, f.getTitle()));
   }
 
   @Override
