@@ -76,7 +76,8 @@ public class SpeciesController extends CrudController<Species, SpeciesDto> {
         s.getHomeworld() == null ? null : s.getHomeworld().getName(),
         s.getPeople().stream().map(p -> p.getId()).toList(),
         s.getFilms().stream().map(f -> f.getId()).toList(),
-        urlOf(s.getId()));
+        urlOf(s.getId()),
+        Avatars.species(s.getName(), s.getSkinColors(), s.getHairColors(), s.getEyeColors()));
   }
 
   @Override

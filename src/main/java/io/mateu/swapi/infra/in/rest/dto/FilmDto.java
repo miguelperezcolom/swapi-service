@@ -17,4 +17,6 @@ public record FilmDto(
     List<Long> starshipIds,
     List<Long> vehicleIds,
     List<Long> speciesIds,
-    String url) {}
+    String url,
+    /** A generated picture of the record (DiceBear, CC0): read-only, ignored on writes. */
+    String image) {}

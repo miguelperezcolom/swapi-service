@@ -9,6 +9,21 @@ metadata:
   namespace: swapi
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
+    # Rate limits, enforced by nginx before a request ever reaches the single JVM behind it. They
+    # are keyed on the client address — and until the load balancer speaks proxy protocol (see
+    # deploy/cluster/README.md) nginx sees ONE address for everybody, so for now these are global
+    # caps that keep the pod alive rather than fair per-client quotas.
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    # The largest honest body is a film with its opening crawl, a few KB. Anything bigger is refused
+    # by nginx with a 413 instead of being parsed by Jackson.
+    nginx.ingress.kubernetes.io/proxy-body-size: "64k"
+    # Every request here is answered in milliseconds; a backend that has not answered in 15s is
+    # stuck, and holding the connection open only lets stuck requests pile up.
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "15"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "15"
 spec:
   ingressClassName: nginx
   tls:

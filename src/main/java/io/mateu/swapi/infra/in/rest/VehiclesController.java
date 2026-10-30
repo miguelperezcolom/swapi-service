@@ -84,7 +84,8 @@ public class VehiclesController extends CrudController<Vehicle, VehicleDto> {
         v.getVehicleClass(),
         v.getPilots().stream().map(p -> p.getId()).toList(),
         v.getFilms().stream().map(f -> f.getId()).toList(),
-        urlOf(v.getId()));
+        urlOf(v.getId()),
+        Avatars.of(Avatars.THINGS, v.getName()));
   }
 
   @Override

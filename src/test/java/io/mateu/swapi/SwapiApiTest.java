@@ -45,6 +45,25 @@ class SwapiApiTest {
   }
 
   @Test
+  @DisplayName("every record carries a generated picture (DiceBear, CC0), drawn from its own data")
+  void images() throws Exception {
+    mvc.perform(get("/api/people/1"))
+        .andExpect(jsonPath("$.image").value(org.hamcrest.Matchers.allOf(
+            org.hamcrest.Matchers.startsWith("https://api.dicebear.com/9.x/pixel-art/png?size=256&seed=Luke+Skywalker"),
+            org.hamcrest.Matchers.containsString("skinColor=ffdbac"), // fair
+            org.hamcrest.Matchers.containsString("hairColor=e8c872"), // blond
+            org.hamcrest.Matchers.containsString("eyesColor=2f6fd8")))); // blue
+    // the data draws the character: Yoda is green, R2-D2 white and blue
+    mvc.perform(get("/api/people").param("search", "Yoda"))
+        .andExpect(jsonPath("$.content[0].image").value(org.hamcrest.Matchers.containsString("skinColor=7fae5b")));
+    mvc.perform(get("/api/people").param("search", "R2-D2"))
+        .andExpect(jsonPath("$.content[0].image").value(org.hamcrest.Matchers.allOf(
+            org.hamcrest.Matchers.containsString("skinColor=f2f2f2"), org.hamcrest.Matchers.containsString("clothingColor=5b84d6"))));
+    mvc.perform(get("/api/planets/1")).andExpect(jsonPath("$.image").value(org.hamcrest.Matchers.startsWith("https://api.dicebear.com/9.x/rings/png")));
+    mvc.perform(get("/api/films").param("size", "1")).andExpect(jsonPath("$.content[0].image").exists());
+  }
+
+  @Test
   @DisplayName("a page carries the total, so a client can render a pager without fetching everything")
   void pagedEnvelope() throws Exception {
     mvc.perform(get("/api/people").param("size", "3"))
@@ -242,6 +261,15 @@ class SwapiApiTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.characterIds.length()").value(2))
         .andExpect(jsonPath("$.planetIds.length()").value(1));
+  }
+
+  @Test
+  @DisplayName("a filter with more values than any multi-select sends is a 400")
+  void tooManyFilterValues() throws Exception {
+    String many = String.join(",", java.util.Collections.nCopies(51, "male"));
+    mvc.perform(get("/api/people").param("gender", many))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("at most 50")));
   }
 
   @Test

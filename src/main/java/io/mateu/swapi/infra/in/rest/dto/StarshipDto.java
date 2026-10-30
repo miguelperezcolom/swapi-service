@@ -21,4 +21,6 @@ public record StarshipDto(
     String starshipClass,
     List<Long> pilotIds,
     List<Long> filmIds,
-    String url) {}
+    String url,
+    /** A generated picture of the record (DiceBear, CC0): read-only, ignored on writes. */
+    String image) {}

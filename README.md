@@ -98,6 +98,26 @@ which is `"19BBY"`.
 `climate` and `terrain` are comma-joined lists in the source (`"hot, humid"`), so they filter by
 containment; `gender`, `classification` and the colours are closed sets and filter exactly.
 
+## Staying up
+
+A public, writable API with one replica and its database in the heap is easy to knock over. What
+keeps it standing, from the edge inwards:
+
+- **nginx rate limits** (`deploy/20-ingress.yaml`): 20 req/s with a burst of 100 and 20 concurrent
+  connections per client address, a 64 KB body ceiling, and 15 s timeouts. Caveat: until the
+  cluster's load balancer speaks proxy protocol, nginx sees one address for everybody, so these are
+  global caps — they keep the pod alive, they do not keep one client from crowding out the rest.
+  See [`deploy/cluster/README.md`](deploy/cluster/README.md) for why that is not switched on yet.
+- **A row ceiling per collection** (`swapi.max-rows-per-collection`, 2000): a create beyond it is a
+  **507**. A leaked write key can fill the demo, but not the heap.
+- **At most 50 values per filter**: `?gender=a,b,c,…` with thousands of values is a 400, not
+  thousands of ORs evaluated on every row.
+- **A JVM that dies when out of memory** (`-XX:+ExitOnOutOfMemoryError`), so Kubernetes restarts it
+  instead of leaving it half-alive.
+
+None of this stops a volumetric DDoS — that saturates the link before nginx sees a request, and only
+a scrubbing proxy in front (Cloudflare or similar) absorbs it.
+
 ## Running it locally
 
 ```bash
@@ -109,7 +129,7 @@ Without a write key configured **every write is refused with 401** — a deploym
 one should be inert, not wide open.
 
 ```bash
-mvn test        # 17 integration tests over the real seeded dataset
+mvn test        # 21 integration tests over the real seeded dataset
 ```
 
 ## Deploying

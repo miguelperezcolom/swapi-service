@@ -1,0 +1,12 @@
+# Layered on top of the release's current values with --reuse-values. See README.md here before
+# applying: this changes every ingress on the cluster, and in-cluster callers break without ipMode Proxy.
+controller:
+  service:
+    annotations:
+      networking.cfke.io/proxy-protocol: "true"
+  config:
+    use-proxy-protocol: "true"
+    # The defaults are 503, which tells a client the server is down rather than that it is going too
+    # fast. 429 is what a well-behaved client backs off on.
+    limit-req-status-code: "429"
+    limit-conn-status-code: "429"

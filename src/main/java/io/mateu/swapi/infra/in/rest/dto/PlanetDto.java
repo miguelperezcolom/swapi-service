@@ -17,4 +17,6 @@ public record PlanetDto(
     Long population,
     List<Long> residentIds,
     List<Long> filmIds,
-    String url) {}
+    String url,
+    /** A generated picture of the record (DiceBear, CC0): read-only, ignored on writes. */
+    String image) {}
