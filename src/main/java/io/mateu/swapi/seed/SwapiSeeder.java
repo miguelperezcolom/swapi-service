@@ -181,7 +181,7 @@ public class SwapiSeeder implements ApplicationRunner {
     Film f = new Film();
     f.setTitle(text(n, "title"));
     f.setEpisodeId(integer(n, "episode_id"));
-    f.setOpeningCrawl(text(n, "opening_crawl"));
+    f.setOpeningCrawl(paragraphs(text(n, "opening_crawl")));
     f.setDirector(text(n, "director"));
     f.setProducer(text(n, "producer"));
     String released = text(n, "release_date");
@@ -246,6 +246,19 @@ public class SwapiSeeder implements ApplicationRunner {
       String ref = item.asText(null);
       if (ref != null && !ref.isBlank()) body.accept(ref);
     });
+  }
+
+  /**
+   * The source wraps the opening crawl the way it scrolls up the screen in the film: a hard line break
+   * every ~30 characters. A screen showing it as text wants PARAGRAPHS — the lines of each one joined,
+   * the blank line between paragraphs kept — so it can flow to whatever width it has.
+   */
+  static String paragraphs(String crawl) {
+    if (crawl == null) return null;
+    return java.util.Arrays.stream(crawl.replace("\r\n", "\n").replace('\r', '\n').split("\\n\\s*\\n"))
+        .map(p -> p.trim().replaceAll("\\s*\\n\\s*", " "))
+        .filter(p -> !p.isEmpty())
+        .collect(java.util.stream.Collectors.joining("\n\n"));
   }
 
   private static String text(JsonNode node, String field) {
